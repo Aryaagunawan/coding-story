@@ -1,4 +1,6 @@
-// Tambahkan error handling
+import { StoryDatabase } from '../../utils/database.js';
+import { showToast } from '../../utils/api.js';
+
 export default async function OfflineStoriesView() {
     try {
         const view = document.createElement('main');
@@ -14,11 +16,9 @@ export default async function OfflineStoriesView() {
         `;
 
         const db = new StoryDatabase();
-        const stories = await db.getAllStories().catch(err => {
-            console.error('Error getting stories:', err);
-            return [];
-        });
+        await db.openDB(); // Pastikan database terbuka sebelum operasi
 
+        const stories = await db.getAllStories();
         const storiesList = view.querySelector('#offlineStoriesList');
 
         if (!stories || stories.length === 0) {
@@ -31,7 +31,7 @@ export default async function OfflineStoriesView() {
             const storyCard = document.createElement('article');
             storyCard.className = 'story-card';
             storyCard.innerHTML = `
-                <img src="${story.photoUrl}" alt="${story.description}" class="story-image">
+                <img src="${story.photoUrl}" alt="${story.description}" class="story-image" onerror="this.src='./images/placeholder.jpg'">
                 <div class="story-content">
                     <h3>${story.name}</h3>
                     <p class="story-description">${story.description}</p>
@@ -44,7 +44,7 @@ export default async function OfflineStoriesView() {
             storiesList.appendChild(storyCard);
         });
 
-        // Event listeners
+        // Event listeners for delete buttons
         view.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 if (confirm('Apakah Anda yakin ingin menghapus cerita ini?')) {
@@ -65,6 +65,7 @@ export default async function OfflineStoriesView() {
             });
         });
 
+        // Event listener for clear all button
         view.querySelector('#clearStoriesBtn').addEventListener('click', async () => {
             if (confirm('Apakah Anda yakin ingin menghapus semua cerita offline?')) {
                 try {
@@ -81,8 +82,20 @@ export default async function OfflineStoriesView() {
         return view;
     } catch (error) {
         console.error('Error in OfflineStoriesView:', error);
+        showToast('Gagal memuat cerita offline', 'error');
+
         const errorView = document.createElement('div');
-        errorView.innerHTML = '<p>Terjadi kesalahan saat memuat cerita offline</p>';
+        errorView.className = 'error-view';
+        errorView.innerHTML = `
+            <p>Terjadi kesalahan saat memuat cerita offline</p>
+            <button class="btn-retry" id="retryButton">Coba Lagi</button>
+        `;
+
+        // Add retry functionality
+        errorView.querySelector('#retryButton').addEventListener('click', () => {
+            window.location.reload();
+        });
+
         return errorView;
     }
 }
