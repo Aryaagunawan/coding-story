@@ -1,7 +1,7 @@
 import { StoryPresenter } from '../../presenters/StoryPresenter.js';
 import { showToast } from '../../utils/api.js';
 import L from 'leaflet';
-import { StoryDatabase } from '../../data/StoryDatabase.js';
+import { StoryDatabase } from '../../utils/database.js';
 
 export default async function StoryDetailView(params) {
   const storyDetailView = document.createElement('main');

@@ -7,6 +7,7 @@ import StoryListView from './views/stories/list.js';
 import StoryDetailView from './views/stories/detail.js';
 import AddStoryView from './views/stories/add.js';
 import NotFoundView from './views/notfound.js';
+import OfflineStoriesView from './views/stories/offline.js';
 
 // Inisialisasi router
 const router = new Router({
