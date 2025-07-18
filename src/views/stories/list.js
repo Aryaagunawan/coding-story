@@ -89,33 +89,36 @@ export default async function StoryListView() {
     }
   }
 
-  // Modified loadStories with offline support
+  // Modified loadStories with offline support - Updated according to instructions
   const loadStories = async (page = 1, withLocation = false) => {
     try {
       if (navigator.onLine) {
-        const stories = await storyPresenter.getAllStories(page, pageSize, withLocation);
-        // Save to IndexedDB when online
-        try {
-          const db = new StoryDatabase();
-          for (const story of stories.listStory) {
-            await db.saveStory(story);
+        const storiesData = await storyPresenter.getAllStories(page, pageSize, withLocation);
+
+        // Validasi response sebelum menyimpan ke DB
+        if (storiesData && storiesData.listStory) {
+          try {
+            const db = new StoryDatabase();
+            for (const story of storiesData.listStory) {
+              await db.saveStory(story);
+            }
+          } catch (dbError) {
+            console.error('Error saving stories to DB:', dbError);
           }
-        } catch (dbError) {
-          console.error('Error saving stories to DB:', dbError);
+          return storiesData;
+        } else {
+          throw new Error('Format data tidak valid dari server');
         }
-        return stories;
       } else {
         const offlineStories = await loadStoriesFromDB();
         if (offlineStories) {
-          storyPresenter.showStories(offlineStories);
           showToast('Anda sedang offline. Menampilkan cerita yang disimpan', 'info');
           return offlineStories;
-        } else {
-          throw new Error('Tidak ada koneksi internet dan tidak ada data offline');
         }
+        throw new Error('Tidak ada koneksi internet dan tidak ada data offline');
       }
     } catch (error) {
-      storyPresenter.showError(error.message);
+      console.error('Error loading stories:', error);
       return { listStory: [], totalItems: 0 };
     }
   };

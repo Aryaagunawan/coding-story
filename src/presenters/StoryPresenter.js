@@ -1,43 +1,110 @@
-// src/presenters/StoryPresenter.js
-import { StoryModel } from '../models/StoryModel.js';
-import { NotificationService, showToast } from '../utils/api.js';
+// src/models/StoryModel.js
+import { StoryService } from '../utils/api.js';
 
-export class StoryPresenter {
-    constructor(view) {
-        this.view = view;
-    }
-
-    async getAllStories(page = 1, size = 10, withLocation = false) {
+export class StoryModel {
+    static async getAllStories(page = 1, size = 10, withLocation = false) {
         try {
-            const stories = await StoryModel.getAllStories(page, size, withLocation);
-            this.view.showStories(stories);
+            const response = await StoryService.getAllStories(page, size, withLocation);
+
+            // Validasi response sesuai instruksi
+            if (!response || typeof response !== 'object') {
+                throw new Error('Response tidak valid dari server');
+            }
+
+            // Berikan nilai default jika listStory tidak ada atau bukan array
+            if (!Array.isArray(response.listStory)) {
+                response.listStory = [];
+            }
+
+            // Normalisasi data
+            return {
+                listStory: response.listStory.map(story => this._normalizeStory(story)),
+                totalItems: parseInt(response.totalItems) || 0,
+                page: parseInt(response.page) || page,
+                size: parseInt(response.size) || size,
+                withLocation: Boolean(response.withLocation)
+            };
+
         } catch (error) {
-            this.view.showError(error.message);
+            console.error('[StoryModel] Error:', error);
+
+            // Kembalikan object dengan format yang diharapkan saat error
+            return {
+                listStory: [],
+                totalItems: 0,
+                page: page,
+                size: size,
+                withLocation: withLocation
+            };
         }
     }
 
-    async getStoryById(id) {
+    static async getStoryById(id) {
         try {
-            const story = await StoryModel.getStoryById(id);
-            this.view.showStoryDetail(story);
+            if (!id) {
+                throw new Error('ID story tidak valid');
+            }
+
+            const story = await StoryService.getStoryById(id);
+
+            // Validasi response
+            if (!story) {
+                throw new Error('Story tidak ditemukan');
+            }
+
+            return this._normalizeStory(story);
+
         } catch (error) {
-            this.view.showError(error.message);
+            console.error(`[StoryModel] Error fetching story ${id}:`, error);
+
+            const enhancedError = new Error(`Gagal mengambil story: ${error.message}`);
+            enhancedError.originalError = error;
+
+            throw enhancedError;
         }
     }
 
-    async addStory(description, photoFile, lat = null, lon = null) {
+    static async addStory(description, photoFile, lat = null, lon = null) {
         try {
-            const result = await StoryModel.addStory(description, photoFile, lat, lon);
-            this.view.onAddStorySuccess(result);
+            if (!description || !photoFile) {
+                throw new Error('Deskripsi dan foto harus diisi');
+            }
 
-            NotificationService.sendNotification({
-                title: 'Story published!',
-                options: {
-                    body: `You shared: "${description.substring(0, 50)}${description.length > 50 ? '...' : ''}"`
-                }
-            });
+            const response = await StoryService.addStory(description, photoFile, lat, lon);
+
+            // Validasi response
+            if (!response || !response.message) {
+                throw new Error('Gagal menambahkan story');
+            }
+
+            return {
+                ...response,
+                success: true,
+                timestamp: new Date().toISOString()
+            };
+
         } catch (error) {
-            this.view.onAddStoryError(error.message);
+            console.error('[StoryModel] Error adding story:', error);
+
+            const enhancedError = new Error(`Gagal menambahkan story: ${error.message}`);
+            enhancedError.originalError = error;
+
+            throw enhancedError;
         }
+    }
+
+    // Helper method untuk normalisasi data story
+    static _normalizeStory(story) {
+        if (!story) return null;
+
+        return {
+            id: story.id || '',
+            name: story.name || 'Anonymous',
+            description: story.description || '',
+            photoUrl: story.photoUrl || '',
+            createdAt: story.createdAt || new Date().toISOString(),
+            lat: story.lat ? parseFloat(story.lat) : null,
+            lon: story.lon ? parseFloat(story.lon) : null
+        };
     }
 }
