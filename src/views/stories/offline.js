@@ -1,27 +1,32 @@
-import { StoryDatabase } from '../../utils/database.js';
-import { showToast } from '../../utils/api.js';
-
+// Tambahkan error handling
 export default async function OfflineStoriesView() {
-    const view = document.createElement('main');
-    view.className = 'offline-stories-view';
-    view.id = 'main-content';
+    try {
+        const view = document.createElement('main');
+        view.className = 'offline-stories-view';
+        view.id = 'main-content';
 
-    view.innerHTML = `
-        <section class="offline-stories-container">
-            <h1>Cerita Offline</h1>
-            <div id="offlineStoriesList" class="stories-grid"></div>
-            <button id="clearStoriesBtn" class="btn-danger">Hapus Semua Cerita Offline</button>
-        </section>
-    `;
+        view.innerHTML = `
+            <section class="offline-stories-container">
+                <h1>Cerita Offline</h1>
+                <div id="offlineStoriesList" class="stories-grid"></div>
+                <button id="clearStoriesBtn" class="btn-danger">Hapus Semua Cerita Offline</button>
+            </section>
+        `;
 
-    const db = new StoryDatabase();
-    const stories = await db.getAllStories();
+        const db = new StoryDatabase();
+        const stories = await db.getAllStories().catch(err => {
+            console.error('Error getting stories:', err);
+            return [];
+        });
 
-    const storiesList = view.querySelector('#offlineStoriesList');
+        const storiesList = view.querySelector('#offlineStoriesList');
 
-    if (stories.length === 0) {
-        storiesList.innerHTML = '<p class="empty-message">Tidak ada cerita offline</p>';
-    } else {
+        if (!stories || stories.length === 0) {
+            storiesList.innerHTML = '<p class="empty-message">Tidak ada cerita offline</p>';
+            return view;
+        }
+
+        // Render stories
         stories.forEach(story => {
             const storyCard = document.createElement('article');
             storyCard.className = 'story-card';
@@ -38,34 +43,46 @@ export default async function OfflineStoriesView() {
             `;
             storiesList.appendChild(storyCard);
         });
-    }
 
-    // Tambahkan tombol hapus per item dengan konfirmasi
-    const deleteButtons = view.querySelectorAll('.delete-btn');
-    deleteButtons.forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            if (confirm('Apakah Anda yakin ingin menghapus cerita ini?')) {
-                const id = e.target.dataset.id;
-                await db.deleteStory(id);
-                showToast('Cerita dihapus', 'success');
-                e.target.closest('.story-card').remove();
+        // Event listeners
+        view.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                if (confirm('Apakah Anda yakin ingin menghapus cerita ini?')) {
+                    try {
+                        const id = e.target.dataset.id;
+                        await db.deleteStory(id);
+                        showToast('Cerita dihapus', 'success');
+                        e.target.closest('.story-card').remove();
 
-                // Update empty message if no stories left
-                if (view.querySelectorAll('.story-card').length === 0) {
+                        if (view.querySelectorAll('.story-card').length === 0) {
+                            storiesList.innerHTML = '<p class="empty-message">Tidak ada cerita offline</p>';
+                        }
+                    } catch (error) {
+                        console.error('Error deleting story:', error);
+                        showToast('Gagal menghapus cerita', 'error');
+                    }
+                }
+            });
+        });
+
+        view.querySelector('#clearStoriesBtn').addEventListener('click', async () => {
+            if (confirm('Apakah Anda yakin ingin menghapus semua cerita offline?')) {
+                try {
+                    await db.clearStories();
+                    showToast('Semua cerita offline dihapus', 'success');
                     storiesList.innerHTML = '<p class="empty-message">Tidak ada cerita offline</p>';
+                } catch (error) {
+                    console.error('Error clearing stories:', error);
+                    showToast('Gagal menghapus semua cerita', 'error');
                 }
             }
         });
-    });
 
-    // Tambahkan tombol hapus semua dengan konfirmasi
-    view.querySelector('#clearStoriesBtn').addEventListener('click', async () => {
-        if (confirm('Apakah Anda yakin ingin menghapus semua cerita offline?')) {
-            await db.clearStories();
-            showToast('Semua cerita offline dihapus', 'success');
-            storiesList.innerHTML = '<p class="empty-message">Tidak ada cerita offline</p>';
-        }
-    });
-
-    return view;
+        return view;
+    } catch (error) {
+        console.error('Error in OfflineStoriesView:', error);
+        const errorView = document.createElement('div');
+        errorView.innerHTML = '<p>Terjadi kesalahan saat memuat cerita offline</p>';
+        return errorView;
+    }
 }

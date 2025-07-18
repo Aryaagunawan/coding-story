@@ -16,7 +16,8 @@ const router = new Router({
     '/stories': StoryListView,
     '/stories/:id': StoryDetailView,
     '/add-story': AddStoryView,
-    '/offline-stories': OfflineStoriesView
+    '/offline-stories': OfflineStoriesView,  // Pastikan ini ada
+    '/not-found': NotFoundView
 }, {
     handleRoute: async function (path) {
         const routeMatch = this.findRouteMatch(path);
