@@ -6,14 +6,14 @@ export class StoryModel {
         try {
             const response = await StoryService.getAllStories(page, size, withLocation);
 
-            // Validasi response
-            if (!response) {
-                throw new Error('Tidak mendapat response dari server');
+            // Validasi response sesuai instruksi
+            if (!response || typeof response !== 'object') {
+                throw new Error('Response tidak valid dari server');
             }
 
-            // Validasi struktur data
+            // Berikan nilai default jika listStory tidak ada atau bukan array
             if (!Array.isArray(response.listStory)) {
-                throw new Error('Format data stories tidak valid');
+                response.listStory = [];
             }
 
             // Normalisasi data
@@ -26,13 +26,16 @@ export class StoryModel {
             };
 
         } catch (error) {
-            console.error('[StoryModel] Error fetching stories:', error);
+            console.error('[StoryModel] Error:', error);
 
-            // Tambahkan konteks error
-            const enhancedError = new Error(`Gagal mengambil stories: ${error.message}`);
-            enhancedError.originalError = error;
-
-            throw enhancedError;
+            // Kembalikan object dengan format yang diharapkan saat error
+            return {
+                listStory: [],
+                totalItems: 0,
+                page: page,
+                size: size,
+                withLocation: withLocation
+            };
         }
     }
 
