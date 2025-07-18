@@ -148,13 +148,27 @@ export class NotificationService {
         return permission === 'granted';
     }
 
+    static async initializeServiceWorker() {
+        if ('serviceWorker' in navigator) {
+            try {
+                const registration = await navigator.serviceWorker.register('/sw.js');
+                console.log('ServiceWorker registered');
+                return registration;
+            } catch (err) {
+                console.error('ServiceWorker registration failed:', err);
+            }
+        }
+    }
+
     static async registerPushNotifications() {
         if (!('serviceWorker' in navigator)) return;
 
         const permission = await this.requestPermission();
         if (!permission) return;
 
-        const registration = await navigator.serviceWorker.register('/sw.js');
+        const registration = await this.initializeServiceWorker();
+        if (!registration) return;
+
         const publicKey = await this.getPublicKey();
         const subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
@@ -162,6 +176,7 @@ export class NotificationService {
         });
 
         await this.subscribe(subscription);
+        return subscription;
     }
 }
 

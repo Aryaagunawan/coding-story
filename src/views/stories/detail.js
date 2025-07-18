@@ -1,6 +1,7 @@
 import { StoryPresenter } from '../../presenters/StoryPresenter.js';
 import { showToast } from '../../utils/api.js';
 import L from 'leaflet';
+import { StoryDatabase } from '../../data/StoryDatabase.js';
 
 export default async function StoryDetailView(params) {
   const storyDetailView = document.createElement('main');
@@ -32,6 +33,12 @@ export default async function StoryDetailView(params) {
           </div>
           <p id="storyDescription" class="story-description"></p>
           
+          <div class="story-actions">
+            <button id="saveOfflineBtn" class="btn-outline">
+              <i class="fas fa-download"></i> Simpan untuk Offline
+            </button>
+          </div>
+          
           <section id="storyLocation" class="story-location" style="display: none;" aria-labelledby="location-heading">
             <h2 id="location-heading"><i class="fas fa-map-marker-alt"></i> Location</h2>
             <div id="detailMap" class="detail-map" role="region" aria-label="Story location on map"></div>
@@ -42,12 +49,15 @@ export default async function StoryDetailView(params) {
   `;
 
   let mapInstance = null;
+  let currentStory = null;
 
   // Initialize StoryPresenter
   const storyPresenter = new StoryPresenter({
     showStories: () => { },
     showStoryDetail: (story) => {
       if (!story) throw new Error('Story not found');
+
+      currentStory = story; // Store the story for offline saving
 
       // Update DOM
       storyDetailView.querySelector('#storyImage').src = story.photoUrl;
@@ -111,6 +121,24 @@ export default async function StoryDetailView(params) {
     },
     onAddStorySuccess: () => { },
     onAddStoryError: () => { }
+  });
+
+  // Add event listener for save offline button
+  const saveOfflineBtn = storyDetailView.querySelector('#saveOfflineBtn');
+  saveOfflineBtn.addEventListener('click', async () => {
+    if (!currentStory) {
+      showToast('No story to save', 'error');
+      return;
+    }
+
+    try {
+      const db = new StoryDatabase();
+      await db.saveStory(currentStory);
+      showToast('Cerita disimpan untuk offline', 'success');
+    } catch (error) {
+      console.error('Error saving story offline:', error);
+      showToast('Gagal menyimpan cerita', 'error');
+    }
   });
 
   // Load the story through presenter

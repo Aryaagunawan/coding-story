@@ -8,12 +8,14 @@ export default async function AddStoryView() {
   addStoryView.className = 'add-story-view';
   addStoryView.id = 'main-content';
 
-  // Request push notification permission
+  // Initialize push notification service
   try {
+    await NotificationService.initializeServiceWorker();
     await NotificationService.requestPermission();
     await NotificationService.registerPushNotifications();
   } catch (error) {
     console.error('Push notification error:', error);
+    showToast('Gagal mengaktifkan notifikasi', 'error');
   }
 
   addStoryView.innerHTML = `

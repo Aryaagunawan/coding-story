@@ -1,8 +1,10 @@
 import { precacheAndRoute } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
 import { StaleWhileRevalidate, CacheFirst } from 'workbox-strategies';
+import { CacheableResponsePlugin } from 'workbox-cacheable-response';
+import { ExpirationPlugin } from 'workbox-expiration';
 
-// Precaching dengan Workbox (otomatis) + cache manual untuk dependensi eksternal
+// Precaching with Workbox (automatic) + manual cache for external dependencies
 precacheAndRoute([
     ...self.__WB_MANIFEST,
     {
@@ -38,31 +40,31 @@ registerRoute(
             }),
             new ExpirationPlugin({
                 maxEntries: 60,
-                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 Hari
+                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 Days
             })
         ]
     })
 );
 
-// Push notifications (diperbarui dari versi Anda)
-self.addEventListener('push', event => {
-    const payload = event.data ? JSON.parse(event.data.text()) : {};
-    const title = payload.title || 'Dicoding Story';
-    const options = {
-        body: payload.options?.body || 'You have a new notification',
-        icon: '/src/assets/icon-192.png',
-        badge: '/src/assets/icon-192.png',
-        data: {
-            url: payload.url || '/'
-        }
+// Push Notification Event Listeners
+self.addEventListener('push', (event) => {
+    const payload = event.data?.json() || {
+        title: 'Dicoding Story',
+        body: 'Anda memiliki cerita baru',
+        url: '/'
     };
 
     event.waitUntil(
-        self.registration.showNotification(title, options)
+        self.registration.showNotification(payload.title, {
+            body: payload.body,
+            icon: '/src/assets/test.jpg',
+            badge: '/src/assets/test.jpg',
+            data: { url: payload.url || '/' }
+        })
     );
 });
 
-self.addEventListener('notificationclick', event => {
+self.addEventListener('notificationclick', (event) => {
     event.notification.close();
     event.waitUntil(
         clients.openWindow(event.notification.data.url || '/')

@@ -73,36 +73,50 @@ export default async function StoryListView() {
 
   // Load stories from IndexedDB when offline
   async function loadStoriesFromDB() {
-    const db = new StoryDatabase();
-    const stories = await db.getAllStories();
-    if (stories.length > 0) {
-      return {
-        listStory: stories,
-        totalItems: stories.length
-      };
+    try {
+      const db = new StoryDatabase();
+      const stories = await db.getAllStories();
+      if (stories.length > 0) {
+        return {
+          listStory: stories,
+          totalItems: stories.length
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error loading stories from DB:', error);
+      return null;
     }
-    return null;
   }
 
   // Modified loadStories with offline support
   const loadStories = async (page = 1, withLocation = false) => {
-    currentPage = page;
     try {
-      const stories = await storyPresenter.getAllStories(page, pageSize, withLocation);
-      // Save to IndexedDB
-      const db = new StoryDatabase();
-      for (const story of stories.listStory) {
-        await db.saveStory(story);
+      if (navigator.onLine) {
+        const stories = await storyPresenter.getAllStories(page, pageSize, withLocation);
+        // Save to IndexedDB when online
+        try {
+          const db = new StoryDatabase();
+          for (const story of stories.listStory) {
+            await db.saveStory(story);
+          }
+        } catch (dbError) {
+          console.error('Error saving stories to DB:', dbError);
+        }
+        return stories;
+      } else {
+        const offlineStories = await loadStoriesFromDB();
+        if (offlineStories) {
+          storyPresenter.showStories(offlineStories);
+          showToast('Anda sedang offline. Menampilkan cerita yang disimpan', 'info');
+          return offlineStories;
+        } else {
+          throw new Error('Tidak ada koneksi internet dan tidak ada data offline');
+        }
       }
     } catch (error) {
-      // If offline, load from IndexedDB
-      const offlineStories = await loadStoriesFromDB();
-      if (offlineStories) {
-        storyPresenter.showStories(offlineStories);
-        showToast('Showing offline data', 'info');
-      } else {
-        storyPresenter.showError('No internet connection and no offline data available');
-      }
+      storyPresenter.showError(error.message);
+      return { listStory: [], totalItems: 0 };
     }
   };
 
@@ -201,7 +215,6 @@ export default async function StoryListView() {
     }
   };
 
-  // Rest of your existing methods (renderPagination, toggleView, etc.)
   const renderPagination = (page, totalItems) => {
     const totalPages = Math.ceil(totalItems / pageSize);
     const prevBtn = storyListView.querySelector('#prevPage');
@@ -237,17 +250,17 @@ export default async function StoryListView() {
   // Event listeners
   storyListView.querySelector('#mapViewBtn').addEventListener('click', toggleView);
   storyListView.querySelector('#listViewBtn').addEventListener('click', toggleView);
-  storyListView.querySelector('#prevPage').addEventListener('click', () => {
+  storyListView.querySelector('#prevPage').addEventListener('click', async () => {
     currentPage--;
-    loadStories(currentPage, isMapView);
+    await loadStories(currentPage, isMapView);
   });
-  storyListView.querySelector('#nextPage').addEventListener('click', () => {
+  storyListView.querySelector('#nextPage').addEventListener('click', async () => {
     currentPage++;
-    loadStories(currentPage, isMapView);
+    await loadStories(currentPage, isMapView);
   });
 
   // Initial load
-  loadStories(currentPage);
+  await loadStories(currentPage);
 
   return storyListView;
 }

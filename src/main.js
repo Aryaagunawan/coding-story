@@ -14,7 +14,8 @@ const router = new Router({
     '/register': RegisterView,
     '/stories': StoryListView,
     '/stories/:id': StoryDetailView,
-    '/add-story': AddStoryView
+    '/add-story': AddStoryView,
+    '/offline-stories': OfflineStoriesView
 }, {
     handleRoute: async function (path) {
         const routeMatch = this.findRouteMatch(path);
@@ -135,4 +136,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             mainContent.setAttribute('tabindex', '-1');
         }
     }, 300);
+});
+
+// Tambahkan di akhir file - PWA Install Prompt Handler
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    const installButton = document.createElement('button');
+    installButton.textContent = 'Install Aplikasi';
+    installButton.className = 'btn-install';
+    installButton.addEventListener('click', () => {
+        e.prompt();
+        installButton.style.display = 'none';
+    });
+    document.body.appendChild(installButton);
 });

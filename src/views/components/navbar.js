@@ -18,6 +18,9 @@ export default async function Navbar() {
         <a href="#/add-story" class="navbar-link">
           <i class="fas fa-plus"></i> Add Story
         </a>
+        <a href="#/offline-stories" class="navbar-link">
+          <i class="fas fa-download"></i> Cerita Offline
+        </a>
         <button id="logoutBtn" class="navbar-link">
           <i class="fas fa-sign-out-alt"></i> Logout
         </button>
