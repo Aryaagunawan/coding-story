@@ -2,7 +2,8 @@
     "name": "Dicoding Story",
     "short_name": "DicodingStory",
     "description": "Aplikasi untuk berbagi cerita pengalaman di Dicoding",
-    "start_url": "/",
+    "start_url": "/coding-story/",
+    "scope": "/coding-story/",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#4f46e5",
@@ -10,23 +11,23 @@
         {
             "src": "/src/assets/icon-x192.png",
             "sizes": "192x192",
-            "type": "image/jpg"
+            "type": "image/png"
         },
         {
             "src": "/src/assets/icon-x512.png",
             "sizes": "512x512",
-            "type": "image/jpg"
+            "type": "image/png"
         }
     ],
     "screenshots": [
         {
-            "src": "/src/assets/Screenshot-desktop.jpg",
+            "src": "/src/assets/dekstop.png",
             "sizes": "1280x800",
-            "type": "image/jpg",
+            "type": "image/png",
             "form_factor": "wide"
         },
         {
-            "src": "/src/assets/smartphone.png",
+            "src": "/src/assets/hp.png",
             "sizes": "360x640",
             "type": "image/png",
             "form_factor": "narrow"
@@ -40,7 +41,7 @@
             "url": "/#/add-story",
             "icons": [
                 {
-                    "src": "/src/assets/icon-x192.png",
+                    "src": "/src/assets/icon-x96.png",
                     "sizes": "96x96"
                 }
             ]
