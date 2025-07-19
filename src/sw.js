@@ -21,11 +21,20 @@ precacheAndRoute([
     }
 ]);
 
-// Cache API responses
+// Cache API responses - Fixed according to instructions
 registerRoute(
-    ({ url }) => url.pathname.startsWith('/v1/'),
+    ({ url }) => url.href.startsWith('https://story-api.dicoding.dev/v1'),
     new StaleWhileRevalidate({
-        cacheName: 'api-cache'
+        cacheName: 'api-cache',
+        plugins: [
+            new CacheableResponsePlugin({
+                statuses: [0, 200]
+            }),
+            new ExpirationPlugin({
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 // 1 hari
+            })
+        ]
     })
 );
 
@@ -57,8 +66,8 @@ self.addEventListener('push', (event) => {
     event.waitUntil(
         self.registration.showNotification(payload.title, {
             body: payload.body,
-            icon: '/src/assets/test.jpg',
-            badge: '/src/assets/test.jpg',
+            icon: '/src/assets/icon-x144.png',
+            badge: '/src/assets/icon-x144.png',
             data: { url: payload.url || '/' }
         })
     );

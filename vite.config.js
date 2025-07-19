@@ -28,12 +28,12 @@ export default defineConfig({
                 theme_color: '#4f46e5',
                 icons: [
                     {
-                        src: '/src/assets/test.jpg',
+                        src: '/src/assets/icon-x192.png',
                         sizes: '192x192',
                         type: 'image/jpg'
                     },
                     {
-                        src: '/src/assets/test.jpg',
+                        src: '/src/assets/icon-x512.png',
                         sizes: '512x512',
                         type: 'image/jpg'
                     }
@@ -43,16 +43,24 @@ export default defineConfig({
                 globPatterns: ['**/*.{js,css,html,png,jpg,jpeg,svg}'],
                 runtimeCaching: [
                     {
-                        urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+                        urlPattern: /^https:\/\/story-api\.dicoding\.dev\/v1\/.*/i,
+                        handler: 'StaleWhileRevalidate',
+                        options: {
+                            cacheName: 'api-cache',
+                            expiration: {
+                                maxEntries: 50,
+                                maxAgeSeconds: 60 * 60 * 24 // 1 hari
+                            }
+                        }
+                    },
+                    {
+                        urlPattern: /\.(?:png|jpg|jpeg|svg)$/,
                         handler: 'CacheFirst',
                         options: {
-                            cacheName: 'google-fonts-cache',
+                            cacheName: 'images-cache',
                             expiration: {
-                                maxEntries: 10,
-                                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 tahun
-                            },
-                            cacheableResponse: {
-                                statuses: [0, 200]
+                                maxEntries: 60,
+                                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 hari
                             }
                         }
                     }
