@@ -26,13 +26,12 @@ export default async function OfflineStoriesView() {
             return view;
         }
 
-        // Render stories - Updated according to instructions
+        // Render stories
         stories.forEach(story => {
             const storyCard = document.createElement('article');
             storyCard.className = 'story-card';
             storyCard.innerHTML = `
-                <img src="${story.photoUrl}" alt="${story.description}" class="story-image" 
-                     onerror="this.onerror=null;this.src='/src/assets/default-story.jpg'">
+                <img src="${story.photoUrl}" alt="${story.description}" class="story-image" onerror="this.src='./images/placeholder.jpg'">
                 <div class="story-content">
                     <h3>${story.name}</h3>
                     <p class="story-description">${story.description}</p>

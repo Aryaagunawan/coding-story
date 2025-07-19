@@ -1,27 +1,19 @@
 // src/models/StoryModel.js
 import { StoryService } from '../utils/api.js';
-import { StoryDatabase } from '../utils/database.js'; // Pastikan ini diimpor
 
 export class StoryModel {
     static async getAllStories(page = 1, size = 10, withLocation = false) {
         try {
-            // Coba ambil dari network dulu
             const response = await StoryService.getAllStories(page, size, withLocation);
 
             // Validasi response
-            if (!response || typeof response !== 'object') {
-                throw new Error('Response tidak valid dari server');
+            if (!response) {
+                throw new Error('Tidak mendapat response dari server');
             }
 
-            // Berikan nilai default jika listStory tidak ada atau bukan array
+            // Validasi struktur data
             if (!Array.isArray(response.listStory)) {
-                response.listStory = [];
-            }
-
-            // Simpan ke IndexedDB jika dapat response valid
-            const db = new StoryDatabase();
-            for (const story of response.listStory) {
-                await db.saveStory(this._normalizeStory(story));
+                throw new Error('Format data stories tidak valid');
             }
 
             // Normalisasi data
@@ -34,23 +26,13 @@ export class StoryModel {
             };
 
         } catch (error) {
-            console.error('[StoryModel] Network error, trying cache:', error);
+            console.error('[StoryModel] Error fetching stories:', error);
 
-            // Jika offline, ambil dari IndexedDB
-            const db = new StoryDatabase();
-            const stories = await db.getAllStories({
-                limit: size,
-                sortBy: 'createdAt',
-                withLocation: withLocation
-            });
+            // Tambahkan konteks error
+            const enhancedError = new Error(`Gagal mengambil stories: ${error.message}`);
+            enhancedError.originalError = error;
 
-            return {
-                listStory: stories,
-                totalItems: stories.length,
-                page: page,
-                size: size,
-                withLocation: withLocation
-            };
+            throw enhancedError;
         }
     }
 
@@ -60,7 +42,6 @@ export class StoryModel {
                 throw new Error('ID story tidak valid');
             }
 
-            // Coba ambil dari network dulu
             const story = await StoryService.getStoryById(id);
 
             // Validasi response
@@ -68,26 +49,15 @@ export class StoryModel {
                 throw new Error('Story tidak ditemukan');
             }
 
-            // Simpan ke IndexedDB
-            const db = new StoryDatabase();
-            await db.saveStory(this._normalizeStory(story));
-
             return this._normalizeStory(story);
 
         } catch (error) {
-            console.error(`[StoryModel] Network error, trying cache for story ${id}:`, error);
+            console.error(`[StoryModel] Error fetching story ${id}:`, error);
 
-            // Jika offline, ambil dari IndexedDB
-            const db = new StoryDatabase();
-            const story = await db.getStoryById(id);
+            const enhancedError = new Error(`Gagal mengambil story: ${error.message}`);
+            enhancedError.originalError = error;
 
-            if (!story) {
-                const enhancedError = new Error(`Story tidak ditemukan (offline mode)`);
-                enhancedError.isOffline = true;
-                throw enhancedError;
-            }
-
-            return story;
+            throw enhancedError;
         }
     }
 
@@ -104,12 +74,6 @@ export class StoryModel {
                 throw new Error('Gagal menambahkan story');
             }
 
-            // Jika berhasil di server, simpan ke IndexedDB juga
-            if (response.story) {
-                const db = new StoryDatabase();
-                await db.saveStory(this._normalizeStory(response.story));
-            }
-
             return {
                 ...response,
                 success: true,
@@ -119,32 +83,9 @@ export class StoryModel {
         } catch (error) {
             console.error('[StoryModel] Error adding story:', error);
 
-            // Jika offline, simpan ke IndexedDB sebagai draft
-            if (error.message.includes('Failed to fetch') || error.message.includes('Network request failed')) {
-                const db = new StoryDatabase();
-                const offlineStory = {
-                    id: `offline-${Date.now()}`,
-                    name: 'User', // Default name
-                    description,
-                    photoUrl: URL.createObjectURL(photoFile),
-                    createdAt: new Date().toISOString(),
-                    lat,
-                    lon,
-                    isOffline: true
-                };
-
-                await db.saveStory(offlineStory);
-
-                return {
-                    message: 'Story disimpan secara offline dan akan diupload ketika koneksi tersedia',
-                    story: offlineStory,
-                    isOffline: true,
-                    success: true
-                };
-            }
-
             const enhancedError = new Error(`Gagal menambahkan story: ${error.message}`);
             enhancedError.originalError = error;
+
             throw enhancedError;
         }
     }
@@ -160,8 +101,7 @@ export class StoryModel {
             photoUrl: story.photoUrl || '',
             createdAt: story.createdAt || new Date().toISOString(),
             lat: story.lat ? parseFloat(story.lat) : null,
-            lon: story.lon ? parseFloat(story.lon) : null,
-            isOffline: Boolean(story.isOffline)
+            lon: story.lon ? parseFloat(story.lon) : null
         };
     }
 }
