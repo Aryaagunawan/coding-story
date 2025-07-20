@@ -57,8 +57,8 @@ self.addEventListener('push', (event) => {
     event.waitUntil(
         self.registration.showNotification(payload.title, {
             body: payload.body,
-            icon: '/src/assets/notification.png',
-            badge: '/src/assets/award.png',
+            icon: '/src/public/notification.png',
+            badge: '/src/public/award.png',
             data: { url: payload.url || '/' }
         })
     );

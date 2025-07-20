@@ -5,7 +5,6 @@ import { StoryListView } from './views/stories/list.js';
 import { StoryDetailView } from './views/stories/detail.js';
 import { AddStoryView } from './views/stories/add.js';
 import { Footer } from './views/components/footer.js';
-import { AuthService, StoryService, NotificationService, showToast } from '../utils/api.js';
 
 class DicodingStoryApp {
     constructor() {

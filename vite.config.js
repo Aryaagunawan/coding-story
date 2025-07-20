@@ -15,11 +15,10 @@ export default defineConfig({
                 main: resolve(__dirname, 'index.html')
             }
         },
-        // Enable modern builds for better performance
         target: 'esnext',
         minify: 'terser'
     },
-    publicDir: 'src/assets',
+    publicDir: 'src/public',
     plugins: [
         VitePWA({
             registerType: 'autoUpdate',
@@ -31,38 +30,58 @@ export default defineConfig({
                 theme_color: '#4f46e5',
                 background_color: '#ffffff',
                 display: 'standalone',
-                start_url: '/',
+                start_url: '/coding-story/',
                 icons: [
                     {
-                        src: '/src/assets/icon-x192.png',
+                        src: 'src/public/icons/icon-72x72.png',
+                        sizes: '72x72',
+                        type: 'image/png'
+                    },
+                    {
+                        src: 'src/public/icons/icon-96x96.png',
+                        sizes: '96x96',
+                        type: 'image/png'
+                    },
+                    {
+                        src: 'src/public/icons/icon-128x128.png',
+                        sizes: '128x128',
+                        type: 'image/png'
+                    },
+                    {
+                        src: 'src/public/icons/icon-144x144.png',
+                        sizes: '144x144',
+                        type: 'image/png',
+                        purpose: 'any'
+                    },
+                    {
+                        src: 'src/public/icons/icon-192x192.png',
                         sizes: '192x192',
                         type: 'image/png',
                         purpose: 'any maskable'
                     },
                     {
-                        src: '/src/assets/icon-x512.png',
+                        src: 'src/public/icons/icon-384x384.png',
+                        sizes: '384x384',
+                        type: 'image/png'
+                    },
+                    {
+                        src: 'src/public/icons/icon-512x512.png',
                         sizes: '512x512',
                         type: 'image/png',
                         purpose: 'any maskable'
-                    },
-                    {
-                        src: '/src/assets/icon-x512.png',
-                        sizes: '512x512',
-                        type: 'image/png',
-                        purpose: 'maskable'
                     }
                 ],
                 screenshots: [
                     {
-                        src: '/src/assets/dekstop.png',
-                        sizes: '1280x800',
+                        src: 'src/public/screenshots/desktop.png', // Fixed typo from 'dekstop'
+                        sizes: '1920x932',
                         type: 'image/png',
                         form_factor: 'wide',
                         label: 'Desktop Screenshot'
                     },
                     {
-                        src: '/src/assets/hp.png',
-                        sizes: '750x1334',
+                        src: 'src/public/screenshots/mobile.png',
+                        sizes: '928x1252',
                         type: 'image/png',
                         form_factor: 'narrow',
                         label: 'Mobile Screenshot'
@@ -73,10 +92,10 @@ export default defineConfig({
                         name: 'Add New Story',
                         short_name: 'Add Story',
                         description: 'Tambahkan cerita baru',
-                        url: '/#/add-story',
+                        url: '/coding-story/#/add-story', // Updated path
                         icons: [
                             {
-                                src: '/src/assets/icon-x96.png',
+                                src: 'src/public/icons/icon-96x96.png',
                                 sizes: '96x96'
                             }
                         ]
@@ -86,7 +105,6 @@ export default defineConfig({
             workbox: {
                 globPatterns: ['**/*.{js,css,html,json,ico,png,jpg,jpeg,svg,woff2}'],
                 runtimeCaching: [
-                    // API caching
                     {
                         urlPattern: /^https:\/\/story-api\.dicoding\.dev\/v1\/stories.*/i,
                         handler: 'StaleWhileRevalidate',
@@ -94,7 +112,7 @@ export default defineConfig({
                             cacheName: 'stories-api-cache',
                             expiration: {
                                 maxEntries: 50,
-                                maxAgeSeconds: 24 * 60 * 60 // 1 hari
+                                maxAgeSeconds: 24 * 60 * 60
                             },
                             cacheableResponse: {
                                 statuses: [0, 200]
@@ -109,11 +127,10 @@ export default defineConfig({
                             networkTimeoutSeconds: 3,
                             expiration: {
                                 maxEntries: 50,
-                                maxAgeSeconds: 5 * 60 // 5 menit
+                                maxAgeSeconds: 5 * 60
                             }
                         }
                     },
-                    // Google Fonts caching
                     {
                         urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
                         handler: 'CacheFirst',
@@ -121,14 +138,13 @@ export default defineConfig({
                             cacheName: 'google-fonts-cache',
                             expiration: {
                                 maxEntries: 10,
-                                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 tahun
+                                maxAgeSeconds: 60 * 60 * 24 * 365
                             },
                             cacheableResponse: {
                                 statuses: [0, 200]
                             }
                         }
                     },
-                    // Image caching
                     {
                         urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
                         handler: 'CacheFirst',
@@ -136,11 +152,10 @@ export default defineConfig({
                             cacheName: 'image-cache',
                             expiration: {
                                 maxEntries: 100,
-                                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 hari
+                                maxAgeSeconds: 30 * 24 * 60 * 60
                             }
                         }
                     },
-                    // Static assets
                     {
                         urlPattern: /\.(?:js|css|json)$/i,
                         handler: 'StaleWhileRevalidate',
@@ -148,18 +163,16 @@ export default defineConfig({
                             cacheName: 'static-assets-cache',
                             expiration: {
                                 maxEntries: 100,
-                                maxAgeSeconds: 7 * 24 * 60 * 60 // 1 minggu
+                                maxAgeSeconds: 7 * 24 * 60 * 60
                             }
                         }
                     }
                 ],
-                // Additional Workbox options
                 skipWaiting: true,
                 clientsClaim: true,
                 cleanupOutdatedCaches: true,
-                maximumFileSizeToCacheInBytes: 5 * 1024 * 1024 // 5MB
+                maximumFileSizeToCacheInBytes: 5 * 1024 * 1024
             },
-            // Dev options
             devOptions: {
                 enabled: true,
                 type: 'module',
